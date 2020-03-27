@@ -1,0 +1,87 @@
+;
+; mcba.inf
+;
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=USBDevice
+ClassGuid={88BAE032-5A81-49f0-BC3D-A4FF138216D6}
+Provider=%ManufacturerName%
+CatalogFile=mcba.cat
+DriverVer=
+
+[DestinationDirs]
+DefaultDestDir = 12
+mcba_Device_CoInstaller_CopyFiles = 11
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+mcba.sys  = 1,,
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with SourceDisksNames
+
+;*****************************************
+; Install Section
+;*****************************************
+
+[Manufacturer]
+%ManufacturerName%=Standard,NT$ARCH$
+
+[Standard.NT$ARCH$]
+%mcba.DeviceDesc%=mcba_Device, USB\VID_04d8&PID_0a30
+
+[mcba_Device.NT]
+CopyFiles=Drivers_Dir
+
+[Drivers_Dir]
+mcba.sys
+
+[mcba_Device.NT.HW]
+AddReg=mcba_AddReg
+
+[mcba_AddReg]
+; By default, USBDevice class uses iProduct descriptor to name the device in
+; Device Manager on Windows 8 and higher.
+; Uncomment for this device to use %DeviceName% on Windows 8 and higher:
+;HKR,,FriendlyName,,%mcba.DeviceDesc%
+
+;-------------- Service installation
+[mcba_Device.NT.Services]
+AddService = mcba,%SPSVCINST_ASSOCSERVICE%, mcba_Service_Inst
+
+; -------------- mcba driver install sections
+[mcba_Service_Inst]
+DisplayName    = %mcba.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\mcba.sys
+
+;
+;--- mcba_Device Coinstaller installation ------
+;
+
+[mcba_Device.NT.CoInstallers]
+AddReg=mcba_Device_CoInstaller_AddReg
+CopyFiles=mcba_Device_CoInstaller_CopyFiles
+
+[mcba_Device_CoInstaller_AddReg]
+HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
+
+[mcba_Device_CoInstaller_CopyFiles]
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
+
+[mcba_Device.NT.Wdf]
+KmdfService =  mcba, mcba_wdfsect
+[mcba_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+SPSVCINST_ASSOCSERVICE= 0x00000002
+ManufacturerName="Jean Gressmann"
+ClassName="Universal Serial Bus devices"
+DiskName = "mcba Installation Disk"
+mcba.DeviceDesc = "Microchip CAN BUS Analyser"
+mcba.SVCDESC = "MCBA Service"
+REG_MULTI_SZ = 0x00010000
